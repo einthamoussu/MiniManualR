@@ -971,7 +971,7 @@ with(pollutionfiltered, plot(COUNTY_CODE,pm25))
 with(pollutionfiltered, plot(COUNTY_CODE,pm25,col = COUNTY_CODE) )
 
 
-#Ejemplo de ir sumando informaci�n con el sistema base
+#Ejemplo de ir sumando informaci?n con el sistema base
 library(datasets)
 # se inicializa el graficado sin colocar los punto dentro del grafico (usando el type = "n"), 
 # esto es porque queremos agregar los puntos luego con otros formatos
@@ -985,11 +985,11 @@ with(subset(airquality, Month != 5), points(Wind,Ozone,col = "red"))
 legend("topright", pch = 1, col = c("blue", "red"), legend = c("May", "Other Months"))
 # se puede calcular una linea de aproximacion lineal
 model <- lm(Ozone ~ Wind, airquality)
-# y se agrega esa linea al gr�fico
+# y se agrega esa linea al gr?fico
 abline(model, lwd = 2, col = "purple")
 
 # si queremos colocar varias graficas en la misma pagina
-  # la funcion par, da los lineamientos de cantidad de graficos, su disposici�n y sus margenes
+  # la funcion par, da los lineamientos de cantidad de graficos, su disposici?n y sus margenes
   # en este caso mfrow indica 1 fila 3 columnas
   # mar es margenes y maneja valores para los 4 lados comenzando por abajo y en sentido horaio
     # abajo 4, izquierda 4, arriba 2, derecha 1
@@ -1002,3 +1002,108 @@ with(airquality, {
   plot(Temp, Ozone, main = "Ozone and Temperature")
   mtext("Ozone and Weather in New York City", outer = TRUE)
 })
+## FIN SISTEMA BASE DE GRAFICO
+
+##############################
+### OTRO SISTEMA GRAFICO
+###   LATTICE
+library(lattice)
+library(datasets)
+
+# Formula principal de Lattice
+# se grafica x e y, para cada variación de f * g
+xyplot(y ~ x | f * g, data)
+xyplot(Ozone ~ Wind, data = airquality)
+
+# como dato al margen, lattice usa "grid" para trabajar, y genera como resultado un objeto "trellis"
+# cuando llamamos a la funcion xyplot directamente, R se encarga de autoimprimir ese objeto trellis en pantalla
+# pero también se lo puede guardar en una variable para usarlo de otra forma.
+
+airquality <- transform(airquality, Month = factor(Month))
+#En este caso son 5 paneles, generando 1 grafico de Ozono y Wind para cada mes
+xyplot(Ozone ~ Wind | Month, data = airquality, layout = c(5,1))
+
+#Se pueden customizar los paneles, si quisiera agregarle una linea horizontal con la media a cada uno
+# y otra linea con el modelo lineal, se puede hacer:
+xyplot(Ozone ~ Wind | Month, data = airquality, layout = c(5,1), panel = function(x, y, ...){
+  panel.xyplot(x, y, ...) # Primero se llama a la funcion normal de graficado
+  panel.abline(h = median(y, na.rm = TRUE), lty = 2) # linea horizontal con la mediana
+  panel.lmline(x,y, col = 2) # linear regression line
+})
+
+
+##############################
+### OTRO SISTEMA GRAFICO
+###   GGPLOT
+library(ggplot2)
+
+#grafica con puntos las variables "hwy" en funcion de "displ", para el dataframe "mpg"
+qplot(displ, hwy, data = mpg)
+#misma grafica anterior, pero se colorean los puntos según el valor de "drv"
+qplot(displ, hwy, data = mpg, color = drv)
+#misma grafica anterior, pero el simbolo varía según el valor de "drv"
+qplot(displ, hwy, data = mpg, shape = drv)
+#misma grafica anterior, pero con linea promedio
+qplot(displ, hwy, data = mpg, geom = c("point","smooth"))
+#grafica anterior parecida, pero con linea promedio en otra forma
+qplot(displ, hwy, data = mpg, color = drv) + geom_smooth(method = "lm")
+
+#separar en 3 graficos, segun valor de "drv", el ~ separa, a la izquierda el valor de cuantas filas de graficos, 
+# a la derecha, el valor de cuantas columnas de graficos, en este cso 3 columnas
+qplot(displ, hwy, data = mpg, facets = . ~ drv)
+#grafica anterior parecida, pero con linea promedio en otra forma
+qplot(displ, hwy, data = mpg, facets = . ~ drv) + geom_smooth(method = "lm")
+#histograma, coloreado según "drv", fill es porque llena el area de abajo con el color
+qplot(hwy, data = mpg, fill = drv)
+#histograma, coloreado según "drv", suavizado por geom: density, "color" pinta la linea del contorno
+qplot(hwy, data = mpg, color = drv, geom = "density")
+# 3 histogramas, según valor de "drv", el ~ separa, a la izquierda el valor de cuantas filas de graficos, 
+# a la derecha, el valor de cuantas columnas de graficos, en este cso 3 filas
+qplot(hwy, data = mpg, facets = drv ~ ., binwith = 2)
+
+#ggplot
+  #GRAFICADO SIMPLE
+g <- ggplot(mpg, aes(displ, hwy))
+summary(g)
+#imprimir grafico anterior con puntos
+g + geom_point()
+  # AGREGADO DE LINEAS O PROMEDIOS 
+#agregar una capa con la media
+g + geom_point() + geom_smooth()
+#agregar una capa con la aproximación lineal
+g + geom_point() + geom_smooth(method = "lm")
+  # MULTIPLES GRAFICOS EN MISMA PAGINA
+#cambiar a la forma de 3 graficos, segun "drv" y en cada uno, una capa con la aproximación lineal
+g + geom_point() + facet_grid(. ~ drv) + geom_smooth(method = "lm")
+#cambiar a la forma de 12 graficos, segun "drv" y "cyl" y en cada uno, una capa con la aproximación lineal
+g + geom_point() + facet_grid(cyl ~ drv) + geom_smooth(method = "lm")
+#imprimir grafico puntos, pero dandole formato a estos puntos, otro color, tamaño = 4 en vez de 1, alpha (transparencia) = 0.5
+  # CAMBIAR ESTETICA DEL GRAFICO
+g + geom_point(color = "steelblue", size = 4, alpha = 1/2)
+#otra forma, para separar por colores segun "drv"
+g + geom_point(aes(color = drv), size = 4, alpha = 1/2)
+# modificar etiquetas
+g + geom_point(aes(color = drv)) + labs(title = "Miles per Galon vs Engine Size") + labs(x = "Motor Size (ltrs)", y = "Miles per galon")
+# modificar estetica de linea promedio (size = 4, linetype = linea punteada, se = intervalo de confianza desactivado)
+g + geom_point(aes(color = drv), size = 2, alpha = 1/2) + geom_smooth(size = 4, linetype = 3, method = "lm", se = FALSE)
+# cambiar el theme del grafico
+g + geom_point(aes(color = drv)) + theme_bw(base_family = "Times")
+
+# anexo como clasificar una variable numerica y convertirla en factor
+#cutpoint <- 
+  # se establecen puntos de corte, en este caso se toma el minimo, el maximo y se divide en 3 tramos (inicio, 33%, 66%, 100%)
+cutpoints <- seq(min(mpg$cty),max(mpg$cty), length = 4)
+  # se construye una nueva columna con el valor según la clasificacion
+mpg$ctyfactor <- cut(as.numeric(mpg$cty), cutpoints)
+levels(mpg$ctyfactor)
+
+# Ejemplo de grafica compleja
+g <- ggplot(mpg, aes(displ, hwy))
+g + 
+  geom_point(alpha = 1/3) + 
+  facet_grid(ctyfactor ~ drv) + 
+  geom_smooth(method = "lm", se = FALSE, col = "steelblue") + 
+  theme_bw( base_family = "Avenir", base_size = 10) + # base_size es el tamaño de la fuente
+  labs( x = "Motor size") + 
+  labs( y = "Miles per Galon") + 
+  labs( title = "Miles per Galon vs Motor size with varying CTY and DRIVE")
