@@ -272,6 +272,9 @@ mean(y)
     # sapply lo mustra como matriz, si no puede mejorarlo devuelve una lista como lapply
   sapply(x, mean) 
   
+    # para alterar cada uno de las filas de un dataframe (en este caso calcula las distancias)
+  sapply(1:nrow(df),function(i)spDistsN1(as.matrix(df[i,4:5]),as.matrix(df[i,12:11]),longlat=T))
+  
   # APPLY es similar a lapply pero se puede acotar a que parte de la lista aplicar la funcion
   x <- matrix(rnorm(200),20,10) # matriz de 20 filas y 10 columnas
   apply(x,2,mean) # aplica la funcion "mean" a las columnas ( valor 2 en arg MARGIN) de "x"
@@ -1002,6 +1005,10 @@ with(airquality, {
   plot(Temp, Ozone, main = "Ozone and Temperature")
   mtext("Ozone and Weather in New York City", outer = TRUE)
 })
+
+#extras
+#agregar etiqueta a cada punto
+text(x+0.05, y+0.05, labels=as.character(1:12))
 ## FIN SISTEMA BASE DE GRAFICO
 
 ##############################
@@ -1107,3 +1114,147 @@ g +
   labs( x = "Motor size") + 
   labs( y = "Miles per Galon") + 
   labs( title = "Miles per Galon vs Motor size with varying CTY and DRIVE")
+
+
+#### SOBRE COLORES EN GRAFICOS
+colors() # ofrece 657 colores y sus nombres, que podemos usar
+
+#pero también está en el package 
+library(graphics)
+
+pal <- colorRamp(c("red","blue")) # genera una funcion pal, que ingresando un parametro con valor entre 0 y 1, devuelve un color
+  # en este caso entre rojo y azul, siendo 0 el rojo y 1 el azul
+
+# la funcion rgb
+rgb(1,1,1,0.5) # permite definir un color indicando la cantidad de Rojo, Verde, Azul y opacidad
+
+# otro paquete
+library(RColorBrewer) # tiene secuencias definidas de colores para usar en graficas tipo factor
+
+
+
+##################################################################
+#EJEMPLO DE UN ANALISIS
+
+#1 cargar datos en dataframe
+pm0 <- read.table("data/daily_88101_1999.csv", header=TRUE, sep = ",")
+pm1 <- read.table("data/daily_88101_2012.csv", header=TRUE, sep = ",")
+
+# mirar primeros valores
+head(pm0)
+head(pm1)
+# mirar dimensiones del dataframe
+dim(pm0)
+dim(pm1)
+# se analiza un campo clave
+x0 <- pm0$X1st.Max.Value
+x1 <- pm1$X1st.Max.Value
+# que tipo de datos es
+class(x0)
+# str para revisar estos datos
+str(x0)
+str(x1)
+# summary para revisar estos datos
+summary(x0)
+summary(x1)
+# revisar NAs, los necesito? para calcular la proporcion de NAs se puede hacer
+mean(is.na(x0)) #calcula la cantidad de verdaderos sobre el total
+
+#una grafica para ir viendo algo
+boxplot(x0,x1)
+boxplot(log10(x0),log10(x1)) # util usar log si hay gran variacion en los numeros
+
+#en este ejemplo aparecen numeros negativos para x1, vamos a aislarlos
+  negative <- x1 < 0  # vector con negativos
+  sum(negative, na.rm = TRUE) #cuantos son
+
+  #a ver si esos negativos ocurren en ciertas fechas?
+  dates <- pm1$Date.Local
+  dates <- as.Date(dates,"%Y-%m-%d") # se convierten a formato Date
+  str(dates)
+  hist(dates, "month") # se hace un histograma, notese que al poner "month" ya lo clasifica por mes
+  hist(dates[negative],"month") # ahora un histograma con los negativos, para ver en que fecha son mas frecuentes
+  # o se ve gran relacion, sigamos con otra cosa
+  
+# vamos a comparar las medidas del 1999 y con las mismas del 2012 a ver que se ve
+site0 <- unique(subset(pm0, State.Code == 36, c(County.Code,Site.Num))) # se extrae de pm0, sin repetidos, los de State.Code 36 (New York) y para esos, solo devuelve las columnas County.Code y Site.Num
+site1 <- unique(subset(pm1, State.Code == 36, c(County.Code,Site.Num)))
+  #se acomodan las 2 columnas de tal forma que quede una sola de esta forma  "col1.col2"
+  site0 <- paste(site0[,1],site0[,2], sep = ".")
+  site1 <- paste(site1[,1],site1[,2], sep = ".")
+  
+  #ahora cuantos sitios estaban en el 1999 y siguen estando en el 2012?
+  both <- intersect(site0,site1)
+  
+  #ahora contemos cuantas observaciones tiene cada uno de estos monitores 
+    # se agrega una columna con el formato "col1.col2" de antes
+  pm0$County.Site <- with(pm0, paste(County.Code,Site.Num, sep = "."))
+  pm1$County.Site <- with(pm1, paste(County.Code,Site.Num, sep = "."))
+  
+    #ahora se puede filtrar la tabla pm0 o pm1 usando "both" que aislamos antes
+  cnt0 <- subset(pm0, State.Code == 36 & County.Site %in% both)
+  cnt1 <- subset(pm1, State.Code == 36 & County.Site %in% both)
+  
+    #separemos ahora estos dataframes por monitor, y se cuenta para cada grupo las filas
+  sapply(split(cnt0, cnt0$County.Site),nrow)
+  sapply(split(cnt1, cnt1$County.Site),nrow)
+  
+  # se ve que el que tiene mas o menos la misma cantidad de observaciones es el "63.2008" profundizamos con este
+  pm0sub <- subset(pm0, State.Code == 36 & County.Code == 63 & Site.Num == 2008)
+  pm1sub <- subset(pm1, State.Code == 36 & County.Code == 63 & Site.Num == 2008)
+
+  #ahora graficamos para ver en este monitor, como fue el comportamiento en 1999 y en 2012
+  dates0 <- as.Date(pm0sub$Date.Local,"%Y-%m-%d")
+  x0sub <-  pm0sub$X1st.Max.Value
+  plot(dates0,x0sub)  
+  
+  dates1 <- as.Date(pm1sub$Date.Local,"%Y-%m-%d")
+  x1sub <-  pm1sub$X1st.Max.Value
+  plot(dates1,x1sub)  
+ 
+  # pero separadas las graficas no es facil comparar, hagamos un panel
+  par(mfrow = c(1,2), mar= c(4,4,2,1))
+  plot(dates0,x0sub,pch=20)
+  abline(h=median(x0sub,na.rm = TRUE))
+  plot(dates1,x1sub,pch=20)
+  abline(h=median(x1sub,na.rm = TRUE))
+  
+  #mucho mejor, pero las graficas quedaron con distinto rango en los ejes "y" y puede confundir.
+    #la funcion range, pasa el rango total de todo lo que le ponemos dentro
+  rng <- range(x0sub,x1sub)
+  plot(dates0,x0sub,pch=20,ylim = rng)
+  abline(h=median(x0sub,na.rm = TRUE))
+  plot(dates1,x1sub,pch=20,ylim = rng)
+  abline(h=median(x1sub,na.rm = TRUE))
+  
+  #esto fue para un monitor en particular. 
+# Ahora vamos a ver que pasa para cada ESTADO
+  # la idea es calcular para cda estado el promedio,
+  # ideal el uso de tapply
+  mn0 <- with(pm0, tapply(X1st.Max.Value,State.Code,mean, na.rm= TRUE))
+  mn1 <- with(pm1, tapply(X1st.Max.Value,State.Code,mean, na.rm= TRUE))
+  str(mn0)
+  class(mn0)
+  summary(mn1)
+  #creamos dataframes con estos datos
+  d0 <- data.frame(State = names(mn0), mean = mn0)
+  d1 <- data.frame(State = names(mn1), mean = mn1)
+  #y hacemos un merge
+  mrg <- merge(d0,d1, by = "State")
+  head(mrg)  
+  
+  #ahora graficamos
+    #se resetea
+  par(mfrow = c(1, 1))
+    #se inicia el motor de graficos con los puntos del 1999
+  with(mrg, plot(rep(1999,51), mrg[,2], xlim = c(1998,2013)))
+    #se agrega al grafico existente los puntos del 2012
+  with(mrg, points(rep(2012,51), mrg[,3]))
+    #se conectan los puntos correspondientes
+    #se usa la funcion segments, entre coordenadas 1 y coordenadas 2
+  segments(rep(1999,51),mrg[,2],rep(2012,51),mrg[,3])
+  
+  # FIN EJEMPLO DE UN ANALISIS
+  ##################################################################
+
+  
