@@ -18,6 +18,8 @@ Let's make a first plot of the data.
 pairs(airquality)
 ```
 
+Se puede definir para cada grafico la altura con fig.height y muchas otras cosas. Esto con la idea de acomodar la imagen a gusto.
+
 Here's a regression model of ozone on wind, solar radiation, and temperature.
 
 ```{r}
@@ -32,3 +34,40 @@ Here's an unordered list:
 * Second element
 * Third element
 * Forth element
+
+##Vamos a ver lo que contiene la columna Ozone, sin mostrar el codigo R (el code chunk tiene nombre ahora "OzoneShow"):
+```{r OzoneShow, echo=FALSE}
+
+airquality$Ozone
+
+```
+
+##Vamos a generar un code chunk pero queno muestra la salida, por ejemplo para ejecutar un calculo que no es necesrio mostrar:
+```{r TempNoShow, echo=FALSE,results='hide'}
+
+airquality$Temp
+
+```
+
+Ahí se hizo, y no se vio nada.
+
+##Si quiero usar codigo en el medio del texto, por ejemplo en el medio de una horacion indicar la fecha:
+```{r TimeToUseLater, echo=FALSE,results='hide'}
+
+time <- format(Sys.time(), "%a %b %d %X %Y")
+
+```
+
+La fecha de hoy es `r time`, y está soleado.
+
+##Agregar tablas al documento
+
+```{r PrintTable, results='asis'}
+
+library(xtable)
+xt <- xtable(airquality[1:10,1:4])
+print(xt,type="html")
+
+```
+
+Notese el uso del paquete xtable, y que al iniciar el code chunk, se debe poner results = 'asis'. Esto es para que knitr no modifique el resultado, sino que utilice lo que le brinda el código directamente
