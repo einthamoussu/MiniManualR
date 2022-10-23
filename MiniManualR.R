@@ -1,3 +1,12 @@
+#DEL ENTORNO
+  #Para mostrar numeros sin pasarlos a notacion cientifica
+options("scipen"=100)
+  #Valor por defecto
+options("scipen"=0)
+
+  # brinda datos del entorno, si un analisis fuese dependeinte del entorno, esta info es necesaria para que alguien pueda reproducirlo.
+sessionInfo()
+
 ## OPERADORES  ####################################
 x <- 1 # operador de asignación "<-" es como el "=" en C++
 x <- 1:20 # el ":" es para crear una secuencia, en este caso de 1 a 20
