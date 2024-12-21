@@ -830,6 +830,36 @@ cylData
 cylData <- dcast(carMelt, cyl ~ variable,mean)
 cylData
 
+  #otro ejemplo, cuando tenemos los datos en filas y queremos mostrar en columnas
+  # ejemplo, para cada pollo hay una fila para cada dia que se lo alimenta, donde se muestra el peso que tiene ese dia
+  # queresmos que se muestre por pollo,los en columnas
+
+    library(datasets)
+    pollos <- ChickWeight
+    #> pollos
+    #weight Time Chick Diet
+    #1       42    0     1    1
+    #2       51    2     1    1
+    #3       59    4     1    1
+    #4       64    6     1    1
+    #5       76    8     1    1
+    #6       93   10     1    1
+
+    dcast(pollos, Diet + Chick ~ Time, value.var = "weight")
+    
+    #Diet Chick  0  2  4  6   8  10  12  14  16  18  20  21
+    #1     1    18 39 35 NA NA  NA  NA  NA  NA  NA  NA  NA  NA
+    #2     1    16 41 45 49 51  57  51  54  NA  NA  NA  NA  NA
+    #3     1    15 41 49 56 64  68  68  67  68  NA  NA  NA  NA
+    #4     1    13 41 48 53 60  65  67  71  70  71  81  91  96
+    #5     1     9 42 51 59 68  85  96  90  92  93 100 100  98
+    #6     1    20 41 47 54 58  65  73  77  89  98 107 115 117
+    #7     1    10 41 44 52 63  74  81  89  96 101 112 120 124
+    #8     1     8 42 50 61 71  84  93 110 116 126 134 125  NA
+    #9     1    17 42 51 61 72  83  89  98 103 113 123 133 142
+    #10    1    19 43 48 55 62  65  71  82  88 106 120 144 157
+    #11    1     4 42 49 56 67  74  87 102 108 136 154 160 157
+    #12    1     6 41 49 59 74  97 124 141 148 155 160 160 157
 
 # DPLYR package (buenisimo para trabajar dataframes, permite facilmente hacer cosas como con SQL)
 library(dplyr)
